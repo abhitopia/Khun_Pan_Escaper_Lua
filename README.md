@@ -1,2 +1,4 @@
-# Khun_Pan_Escaper_Lua
-A basic Khun Pan Escaper game as my attempt to Learn Lua in a fun way. It should use basic Lua features and should serve as an exercise  to learn Lua and nonetheless making fun game in the process.
+# Khun Pan Escaper To Freedom
+Khun Pan was the leading character in a Thai Legend The "Khun Chang-Khun Pan" as of this game because of being jailed; Khun Pan tried to break the jail through the encirclement of nine sentries. How could he make it? The biggest piece of the board represents Khun Pan and the other nine smaller peices are sentries. Slide the pieces along the given patterns until the Khun Pan (biggest piece) is able to come to the lower edge of the board. 
+
+... khun Pan has Accomplished his Jail-break.
