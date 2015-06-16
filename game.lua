@@ -3,7 +3,7 @@
 
 usage_str = [[
 Usage:
-  	Use arrow keys to navigate and Esc to quit. 
+  	Use 'space' to toggle among the sentries, arrow keys to slide and 'q' to quit. 
 
 Objective:
 	Move blocks to get the biggest block out of the maze.
@@ -63,6 +63,7 @@ function Game:new ()
 end
 
 function Game:init()
+	self.game_state = 'playing'
 	print 'init'
 	-- Start up curses.	
 	curses.initscr()    -- Initialize the curses library and the terminal screen.
@@ -163,7 +164,10 @@ function Game:is_valid_move(old_sentry, new_sentry)
 			if eff_x < 1 or eff_x > 6 or eff_y < 1 or eff_y > 7 then valid = false end
 			if self.board_color[eff_y][eff_x] ~= 0 then valid = false end
 			if new_sentry.khun_pan and self.board_char[eff_y][eff_x] == '-' then 
-				if self.board_color[eff_y][eff_x] == 13 then valid = true end
+				if self.board_color[eff_y][eff_x] == 13 then 
+					self.game_state = 'escaped'
+					valid = true 
+				end
 			end
 			if not valid then break end
 		end
@@ -202,17 +206,21 @@ function Game:draw_screen()
 	local board_height = self.y_scale * 7
   	local x_margin = math.floor((scr_width - board_width) / 2)
 	local y_margin = 10	
-
 	active_sentry = self.sentries[self.active_sentry] 
 	-- Draw the board's border and non-falling pieces if we're not paused.
-  	for y = 1, 7 do
-    		for x = 1, 6 do
-      			-- Draw ' ' for shape & empty points; '|' for border points.
-			local color = self.board_color[y][x]
-			local char = self.board_char[y][x]
-      			draw_point( x, y,  x_margin, y_margin, color, char)
-    		end
-  	end
+	if self.game_state == 'playing' then
+	  	for y = 1, 7 do
+    			for x = 1, 6 do
+      				-- Draw ' ' for shape & empty points; '|' for border points.
+				local color = self.board_color[y][x]
+				local char = self.board_char[y][x]
+      				draw_point( x, y,  x_margin, y_margin, color, char)
+    			end
+  		end	
+	else
+		print 'Congratulations'
+		os.exit(0)
+	end
 	
 end
 
