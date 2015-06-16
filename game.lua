@@ -33,7 +33,7 @@ Game = { board_color = {{11, 11, 11, 11, 11, 11},
 		  	{11,  0,  0,  0,  0, 11},
 		  	{11,  0,  0,  0,  0, 11},
 		  	{11,  0,  0,  0,  0, 11},
-		  	{11, 11,  11,  11, 11, 11}},
+		  	{11, 11,  13,  13, 11, 11}},
 
 	board_char =   {{'|', '|', '|', '|', '|', '|'}, 
 		  	{'|', ' ', ' ', ' ', ' ', '|'},
@@ -44,7 +44,7 @@ Game = { board_color = {{11, 11, 11, 11, 11, 11},
 		  	{'|', '|', '-', '-', '|', '|'}},
 
 	sentries = {{x=2, y=2, dx=1, dy=2, char = '\\', fg_color='black', bg_color='red'},
-		    {x=3, y=2, dx=2, dy=2, char = ' ', fg_color='red', bg_color='green'},
+		    {x=3, y=2, dx=2, dy=2, char = ' ', fg_color='red', bg_color='green'},  -- Khun Pan
 		    {x=5, y=2, dx=1, dy=2, char = '/', fg_color='black', bg_color='red'},
 		    {x=2, y=4, dx=1, dy=2, char = '+', fg_color='white', bg_color='blue'},
 		    {x=3, y=4, dx=2, dy=1, char = '-', fg_color='black', bg_color='white'},
@@ -91,11 +91,13 @@ function Game:init()
 		v.color, v.flip_color = k, k+33
     		curses.init_pair(v.color, c_fg, c_bg)
 		curses.init_pair(v.flip_color, c_bg, c_fg)
+		if k == 2 then v.khun_pan = true else v.khun_pan = false end
   	end
 	local border = self.border
 	
 	c_fg, c_bg = curses['COLOR_' .. border.fg_color:upper()], curses['COLOR_' .. border.bg_color:upper()]
     	curses.init_pair(11, c_fg, c_bg)
+	curses.init_pair(13,curses['COLOR_YELLOW'], curses['COLOR_BLACK'])
 
 	function set_color(c)
   		stdscr:attron(curses.color_pair(c))
@@ -158,14 +160,12 @@ function Game:is_valid_move(old_sentry, new_sentry)
 	for dx=0, new_sentry.dx-1 do
 		for dy=0, new_sentry.dy-1 do
 			eff_x, eff_y = new_sentry.x+dx, new_sentry.y+dy
-			if eff_x < 1 or eff_x > 6 or eff_y < 1 or eff_y > 7 then 
-				valid = false
-				break
+			if eff_x < 1 or eff_x > 6 or eff_y < 1 or eff_y > 7 then valid = false end
+			if self.board_color[eff_y][eff_x] ~= 0 then valid = false end
+			if new_sentry.khun_pan and self.board_char[eff_y][eff_x] == '-' then 
+				if self.board_color[eff_y][eff_x] == 13 then valid = true end
 			end
-			if self.board_color[new_sentry.y+dy][new_sentry.x+dx] ~= 0 then
-				valid = false
-				break
-			end
+			if not valid then break end
 		end
 	end
 	self:set_sentry(old_sentry)
