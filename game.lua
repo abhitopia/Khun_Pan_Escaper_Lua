@@ -33,7 +33,7 @@ Game = { board_color = {{11, 11, 11, 11, 11, 11},
 		  	{11,  0,  0,  0,  0, 11},
 		  	{11,  0,  0,  0,  0, 11},
 		  	{11,  0,  0,  0,  0, 11},
-		  	{11, 11,  0,  0, 11, 11}},
+		  	{11, 11,  11,  11, 11, 11}},
 
 	board_char =   {{'|', '|', '|', '|', '|', '|'}, 
 		  	{'|', ' ', ' ', ' ', ' ', '|'},
@@ -41,17 +41,17 @@ Game = { board_color = {{11, 11, 11, 11, 11, 11},
 		  	{'|', ' ', ' ', ' ', ' ', '|'},
 		  	{'|', ' ', ' ', ' ', ' ', '|'},
 		  	{'|', ' ', ' ', ' ', ' ', '|'},
-		  	{'|', '|', ' ', ' ', '|', '|'}},
+		  	{'|', '|', '-', '-', '|', '|'}},
 
 	sentries = {{x=2, y=2, dx=1, dy=2, char = '\\', fg_color='black', bg_color='red'},
-		    {x=3, y=2, dx=2, dy=2, char = ' ', fg_color='green', bg_color='green'},
+		    {x=3, y=2, dx=2, dy=2, char = ' ', fg_color='red', bg_color='green'},
 		    {x=5, y=2, dx=1, dy=2, char = '/', fg_color='black', bg_color='red'},
 		    {x=2, y=4, dx=1, dy=2, char = '+', fg_color='white', bg_color='blue'},
 		    {x=3, y=4, dx=2, dy=1, char = '-', fg_color='black', bg_color='white'},
 		    {x=5, y=4, dx=1, dy=2, char = '+', fg_color='white', bg_color='blue'},
 		    {x=3, y=5, dx=1, dy=1, char = '.', fg_color='red', bg_color='yellow'},
-		    {x=4, y=5, dx=1, dy=1, char = '.', fg_color='cyan', bg_color='cyan'},
-		    {x=3, y=6, dx=1, dy=1, char = '.', fg_color='cyan', bg_color='cyan'},
+		    {x=4, y=5, dx=1, dy=1, char = '.', fg_color='magenta', bg_color='cyan'},
+		    {x=3, y=6, dx=1, dy=1, char = '.', fg_color='magenta', bg_color='cyan'},
                     {x=4, y=6, dx=1, dy=1, char = '.', fg_color='red', bg_color='yellow'}},
 	border = {fg_color='white', bg_color='black'},
 	x_scale =  4
@@ -88,9 +88,9 @@ function Game:init()
 	curses.init_pair(12, curses['COLOR_BLACK'], curses['COLOR_BLACK'])
   	for k, v in ipairs(self.sentries) do
     		c_fg, c_bg = curses['COLOR_' .. v.fg_color:upper()], curses['COLOR_' .. v.bg_color:upper()]
-    		curses.init_pair(k, c_fg, c_bg)
-		--curses.init_pair(k+33, c_bg, c_fg)
-		v.color = k
+		v.color, v.flip_color = k, k+33
+    		curses.init_pair(v.color, c_fg, c_bg)
+		curses.init_pair(v.flip_color, c_bg, c_fg)
   	end
 	local border = self.border
 	
@@ -119,7 +119,7 @@ function Game:init()
 		--set_color(12)
 	end 
 	
-	self.active_sentry = 0
+	self.active_sentry = 4
 end
 
 function Game:handle_input()
@@ -156,7 +156,12 @@ function Game:is_valid_move(old_sentry, new_sentry)
 	self:set_sentry(old_sentry, 0, ' ')
 	valid = true
 	for dx=0, new_sentry.dx-1 do
-		for dy=0, new_sentry.dy-1 do 
+		for dy=0, new_sentry.dy-1 do
+			eff_x, eff_y = new_sentry.x+dx, new_sentry.y+dy
+			if eff_x < 1 or eff_x > 6 or eff_y < 1 or eff_y > 7 then 
+				valid = false
+				break
+			end
 			if self.board_color[new_sentry.y+dy][new_sentry.x+dx] ~= 0 then
 				valid = false
 				break
@@ -175,12 +180,17 @@ function Game:move(direction)
 		self.sentries[self.active_sentry] = new_sentry
 		self:set_sentry(self.sentries[self.active_sentry])
 	end
-	--print(inspect(self.board_color))
 end
 
 function Game:fill_board()
 	for i, sentry in ipairs(self.sentries) do
-		self:set_sentry(sentry)
+		if i == self.active_sentry then
+			if self.flipped == 'yes' then
+				self:set_sentry(sentry, sentry.flip_color)	
+			end
+		else
+			self:set_sentry(sentry)
+		end
 	end	
 end
 
@@ -242,8 +252,15 @@ function Game:toggle_active_sentry()
 	end
 end
 
-function Game:see_board()
-	print(inspect(self.board_color))
+function Game:toggle_counter(counter_max)
+	if not self.counter then self.counter = 1 end
+	if not self.flipped then self.flipped = 'no' end
+	self.counter = self.counter + 1
+	local flipped = {['yes']='no', ['no']='yes'}
+	if self.counter == counter_max then 
+		self.counter = 1
+		self.flipped = flipped[self.flipped]
+	end
 end
 
 function Game:play()
@@ -253,12 +270,15 @@ function Game:play()
 	self:toggle_active_sentry()
  	while true do  -- Main loop.
 		self:update_movable_sentries()
-    		self:handle_input(stats, fall, next_piece)
+    		self:handle_input()
+		self:fill_board()
     		self:draw_screen()
 
     		-- Don't poll for input much faster than the display can change.
     		local sec, nsec = 0, 5e6  -- 0.005 seconds.
     		posix.nanosleep(sec, nsec)
+
+		self:toggle_counter(10)
   	end
 	--]]
 end
