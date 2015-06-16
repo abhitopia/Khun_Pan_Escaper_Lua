@@ -179,15 +179,8 @@ function Game:move(direction)
 end
 
 function Game:fill_board()
-	local sentries =  self.sentries
-	for i, sentry in ipairs(sentries) do
-		color, x, y, char = i, sentry.x, sentry.y, sentry.char
-		for dx=0, sentry.dx-1 do
-			for dy=0, sentry.dy-1 do
-				self.board_char[y+dy][x+dx] = char
-				self.board_color[y+dy][x+dx] = color
-			end
-		end
+	for i, sentry in ipairs(self.sentries) do
+		self:set_sentry(sentry)
 	end	
 end
 
